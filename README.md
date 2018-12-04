@@ -10,7 +10,10 @@ npx create-wp-plugin
 
 ## Arguments
 
-`create-wp-plugin --help` Display available options
-`create-wp-plugin --version` Display module version
+Display available options:
 
-a
+`create-wp-plugin --help`
+
+Display module version:
+
+`create-wp-plugin --version`

@@ -1,31 +1,55 @@
 #!/usr/bin/env node
 const inquirer = require("inquirer");
-//const argv = require("yargs").argv;
+const argv = require("yargs").argv;
 const values = require("./input-data");
 const chalk = require("chalk");
 const chalkPipe = require("chalk-pipe");
-var figlet = require("figlet");
 const isSemver = require("is-semver");
 const logSymbols = require("log-symbols");
+const messages = require("./console-messages");
 
-console.clear();
+messages.initial();
 
-console.log(
-  figlet.textSync("create-wp-plugin", {
-    //font: "Ghost",
-    horizontalLayout: "default",
-    verticalLayout: "default"
-  })
-);
-console.log("\nCreated by David Gwyer");
-console.log("Twitter: https://twitter.com/dgwyer");
-console.log("GitHub: https://github.com/dgwyer/wp-block\n");
-console.log("-----\n");
+//console.log(argv);
 
-// if (argv.ships > 3 && argv.distance < 53.5) {
-//   console.log("Plunder more riffiwobbles!");
-// } else {
-//   console.log("Retreat from the xupptumblers!");
+process.on("exit", code => {
+  if (code === 1) {
+    console.log(
+      chalk.red(
+        `Error: Plugin name missing. Please enter a valid plugin name (e.g. create-wp-plugin my-plugin)`
+      )
+    );
+  } else {
+    console.log(
+      chalk.green(`\nThank you for using create-wp-plugin! Until next time...`)
+    );
+  }
+});
+
+console.log("Args:", argv);
+console.log(chalk.green(`Creating Plugin: ${argv._[0]}\n`));
+
+// if no plugin name specified
+if (argv._.length == 0) {
+  process.exit(1);
+}
+
+// if no plugin name specified
+if (argv.hasOwnProperty("dir") && (argv.dir === "" || argv.dir.length === 0)) {
+  console.log("dir empty?");
+  argv.dir = argv._[0];
+} else if (argv.hasOwnProperty("dir")) {
+  console.log("we got one!");
+  if (argv.dir === true) {
+    // this will be true if --dir set on it's own so just use plugin name in this case
+    argv.dir = argv._[0];
+  }
+} else {
+  console.log("no dir? using plugin name as folder");
+  argv.dir = argv._[0];
+}
+
+console.log("PLUGIN DIR: ", argv.dir);
 
 const plugin_defaults = {
   name: "New WP Plugin",
@@ -36,20 +60,19 @@ const plugin_defaults = {
 const questions = [
   {
     type: "input",
-    name: "plugin_name",
-    message: "Plugin Name:",
-    default: function() {
-      return plugin_defaults.name;
-    },
+    name: "plugin_folder",
+    message: "Plugin Folder:",
     filter: function(input) {
       return input.trim();
     },
+    default: function() {
+      return argv._[0];
+    },
     validate: function(input) {
       if (input.trim()) {
-        console.log(logSymbols.success);
         return true;
       } else {
-        console.log(chalk.red("(required)"));
+        console.log(chalk.red("error: required field"));
         return false;
       }
     }
@@ -74,10 +97,11 @@ const questions = [
     },
     validate: function(input) {
       if (isSemver(input)) {
-        console.log(chalk.green("(required)"));
         return true;
       } else {
-        console.log(chalk.red("(required)"));
+        console.log(
+          chalk.red(" error: must be valid semver number (e.g. 0.0.1)")
+        );
         return false;
       }
     }
@@ -93,38 +117,6 @@ const questions = [
       return input.trim();
     }
   }
-  // {
-  //   type: "list",
-  //   name: "servedIn",
-  //   message: "How do you prefer your coffee to be served in",
-  //   choices: values.servedIn
-  // },
-  // {
-  //   type: "confirm",
-  //   name: "stirrer",
-  //   message: "Do you prefer your coffee with a stirrer?",
-  //   default: true
-  // },
-  // {
-  //   type: "input",
-  //   name: "last_name",
-  //   message: "What's your last name",
-  //   default: function() {
-  //     return "Doe";
-  //   }
-  // },
-  // {
-  //   type: "input",
-  //   name: "fav_color",
-  //   message: "What's your favorite color",
-  //   transformer: function(color, answers, flags) {
-  //     const text = chalkPipe(color)(color);
-  //     if (flags.isFinal) {
-  //       return text;
-  //     }
-  //     return text;
-  //   }
-  // }
 ];
 
 inquirer.prompt(questions).then(function(answers) {
@@ -138,3 +130,8 @@ inquirer.prompt(questions).then(function(answers) {
 // 1. Check if plugin folder already exists? Or warn when plugin is running and exit.
 // 2. Whitelist characters for certain fields such as plugin name (look up allowed characters).
 // 3. Implement global config object but where to store this when calling npx?
+// 4. Make sure dir is string and doesn't include any slash characters.
+// 5. When finished creating plugin:
+//    a. cd into folder.
+//    b. optionally start watching files.
+//    c. optionally start web server and open browser (set flag to pick admin or front end). Might need to look into express to figure this out.

@@ -7,7 +7,9 @@ const chalkPipe = require("chalk-pipe");
 const isSemver = require("is-semver");
 const logSymbols = require("log-symbols");
 const messages = require("./console-messages");
+const titleize = require("titleize");
 
+// Show console welcome message
 messages.initial();
 
 //console.log(argv);
@@ -21,35 +23,42 @@ process.on("exit", code => {
     );
   } else {
     console.log(
-      chalk.green(`\nThank you for using create-wp-plugin! Until next time...`)
+      chalk.green(
+        `\nThank you for using create-wp-plugin!\n\nUntil next time...\n`
+      )
     );
   }
 });
 
-console.log("Args:", argv);
-console.log(chalk.green(`Creating Plugin: ${argv._[0]}\n`));
-
-// if no plugin name specified
+// exit if no plugin name specified
 if (argv._.length == 0) {
   process.exit(1);
 }
 
 // if no plugin name specified
 if (argv.hasOwnProperty("dir") && (argv.dir === "" || argv.dir.length === 0)) {
-  console.log("dir empty?");
+  //console.log("dir empty?");
   argv.dir = argv._[0];
 } else if (argv.hasOwnProperty("dir")) {
-  console.log("we got one!");
+  //console.log("we got one!");
   if (argv.dir === true) {
     // this will be true if --dir set on it's own so just use plugin name in this case
     argv.dir = argv._[0];
   }
 } else {
-  console.log("no dir? using plugin name as folder");
+  //console.log("no dir? using plugin name as folder");
   argv.dir = argv._[0];
 }
 
-console.log("PLUGIN DIR: ", argv.dir);
+// remove '-' and '_' chars
+argv.plugin_nice_name = argv._[0].replace(/[_-]/g, " ");
+
+// trim and remove multiple spaces
+argv.plugin_nice_name = argv.plugin_nice_name.replace(/ +(?= )/g, "").trim();
+
+argv.plugin_nice_name = titleize(argv.plugin_nice_name);
+
+console.log(chalk.green(`Creating Plugin >> '${argv.plugin_nice_name}'\n`));
 
 const plugin_defaults = {
   name: "New WP Plugin",
@@ -58,25 +67,6 @@ const plugin_defaults = {
 };
 
 const questions = [
-  {
-    type: "input",
-    name: "plugin_folder",
-    message: "Plugin Folder:",
-    filter: function(input) {
-      return input.trim();
-    },
-    default: function() {
-      return argv._[0];
-    },
-    validate: function(input) {
-      if (input.trim()) {
-        return true;
-      } else {
-        console.log(chalk.red("error: required field"));
-        return false;
-      }
-    }
-  },
   {
     type: "input",
     name: "plugin_author",
@@ -120,9 +110,11 @@ const questions = [
 ];
 
 inquirer.prompt(questions).then(function(answers) {
-  console.log(answers);
+  //console.log(answers);
 
   // dir as option to specify folder name that's different from plugin name >>> --dir="wpgoplugins"
+
+  console.log(chalk.green("\nCreating plugin..."));
 });
 
 // To Do
@@ -135,3 +127,4 @@ inquirer.prompt(questions).then(function(answers) {
 //    a. cd into folder.
 //    b. optionally start watching files.
 //    c. optionally start web server and open browser (set flag to pick admin or front end). Might need to look into express to figure this out.
+// 6. Spin up new GitHub repo too?

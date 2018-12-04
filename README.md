@@ -1,2 +1,4 @@
-# create-wp-plugin
-NodeJs CLI application to generate WordPress plugins
+# wp-plugin-cli
+NodeJs CLI command to generate WordPress plugins	NodeJs CLI command to generate WordPress plugins
+Usage:
+npx wp-plugin

@@ -1,4 +1,6 @@
-# Warning: Still in development please don't use!
+# !! Warning: Still in Development !!
+
+This isn't ready for use yet, so please don't install just yet. If you're interested in this project I'd love to see some pull requests. Or just star and watch the repo until the first proper version is ready!
 
 # create-wp-plugin
 

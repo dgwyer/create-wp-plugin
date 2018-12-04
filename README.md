@@ -1,6 +1,8 @@
 # !! Warning: Still in Development !!
 
-This isn't ready for use yet, so please don't install just yet. If you're interested in this project I'd love to see some pull requests. Or just star and watch the repo until the first proper version is ready!
+This isn't ready for use ATM, so it's not recommended that you install. It doesn't really do anything useful yet.
+
+If you're interested in this project I'd love to see some pull requests. Or just star the repo and watch until the first proper version is ready!
 
 # create-wp-plugin
 

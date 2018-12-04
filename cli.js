@@ -6,7 +6,7 @@ const chalk = require("chalk");
 const chalkPipe = require("chalk-pipe");
 
 console.log("Welcome to create-wp-plugin\n");
-console.log("Nothing to see yet, but coming soon...\n");
+console.log("[v1.0.1] Nothing to see yet, but coming soon...\n");
 return;
 
 if (argv.ships > 3 && argv.distance < 53.5) {

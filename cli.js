@@ -8,19 +8,18 @@ const isSemver = require("is-semver");
 const logSymbols = require("log-symbols");
 const messages = require("./console-messages");
 const titleize = require("titleize");
+const shell = require("shelljs");
+const execa = require("execa");
+const exists = require("global-module-exists");
 
 // Show console welcome message
 messages.initial();
 
-//console.log(argv);
+var install_parcel = true;
 
 process.on("exit", code => {
   if (code === 1) {
-    console.log(
-      chalk.red(
-        `Error: Plugin name missing. Please enter a valid plugin name (e.g. create-wp-plugin my-plugin)`
-      )
-    );
+    //console.log(chalk.red(`Error: terminating script`));
   } else {
     console.log(
       chalk.green(
@@ -58,7 +57,14 @@ argv.plugin_nice_name = argv.plugin_nice_name.replace(/ +(?= )/g, "").trim();
 
 argv.plugin_nice_name = titleize(argv.plugin_nice_name);
 
-console.log(chalk.green(`Creating Plugin >> '${argv.plugin_nice_name}'\n`));
+console.log(chalk.blue(`1) LET'S GATHER SOME PLUGIN DETAILS (1/4)\n`));
+
+console.log(chalk.green(`Plugin Name: ${argv.plugin_nice_name}\n`));
+
+// Is Parcel module installed globally?
+if (exists("parcel") || exists("parcel-bundler")) {
+  install_parcel = false;
+}
 
 const plugin_defaults = {
   name: "New WP Plugin",
@@ -106,15 +112,112 @@ const questions = [
     filter: function(input) {
       return input.trim();
     }
+  },
+  {
+    type: "list",
+    name: "parcel_module",
+    message: "Install Parcel",
+    choices: ["Globally", "Locally", "Don't install"]
   }
 ];
 
+// remove last question if Parcel globally installed
+if (install_parcel === false) {
+  questions.splice(questions.length - 1);
+}
+
 inquirer.prompt(questions).then(function(answers) {
-  //console.log(answers);
+  // Is Parcel module installed globally?
+  if (exists("parcel") || exists("parcel-bundler")) {
+    console.log(
+      "\nGlobal Parcel module found. Great! This will save a lot of time. Skipping install...\n"
+    );
+  }
+
+  console.log(chalk.blue(`2) CREATING PLUGIN FILES (2/4)\n`));
+
+  if (shell.mkdir(argv.dir).code !== 0) {
+    console.log(chalk.red(`Error: Main plugin folder cannot be created`));
+    shell.exit(1);
+  }
+
+  //  shell.exec(`mkdir ${argv.dir}`);
+  shell.cd(argv.dir);
+  shell.exec("npm init -y"); // create package.json file
+  shell.touch("functions.php");
+
+  if (shell.mkdir("languages").code !== 0) {
+    console.log(chalk.red(`Error: languages folder cannot be created`));
+    shell.exit(1);
+  }
+  if (shell.mkdir("assets").code !== 0) {
+    console.log(chalk.red(`Error: assets folder cannot be created`));
+    shell.exit(1);
+  }
+  if (shell.mkdir("assets/js").code !== 0) {
+    console.log(chalk.red(`Error: assets/js folder cannot be created`));
+    shell.exit(1);
+  }
+  if (shell.mkdir("assets/css").code !== 0) {
+    console.log(chalk.red(`Error: assets/css folder cannot be created`));
+    shell.exit(1);
+  }
+
+  // install Parcel
+  if (answers.hasOwnProperty("parcel_module")) {
+    if (answers.parcel_module === "Globally") {
+      console.log(
+        "\nInstalling Parcel globally. Please be patient, this could take a couple of minutes.\nTh"
+      );
+      shell.exec("npm i -g parcel-bundler");
+      //execa.shellSync("npm i -g parcel-bundler");
+    } else if (answers.parcel_module === "Locally") {
+      console.log(
+        "\nInstalling Parcel locally. Please be patient, this could take a couple of minutes.\n\nTop tip! If you install Parcel globally (e.g. npm i -g parcel) then create-wp-plugin runs MUCH quicker."
+      );
+      shell.exec("npm i parcel-bundler");
+      //execa.shellSync("npm i parcel-bundler");
+    } else {
+      // console.log("Unknown value for Parcel");
+    }
+  }
+
+  console.log(answers);
 
   // dir as option to specify folder name that's different from plugin name >>> --dir="wpgoplugins"
 
   console.log(chalk.green("\nCreating plugin..."));
+
+  //shell.exec('npm list -g --depth=0"');
+
+  // if (shell.mkdir(argv.dir).code !== 0) {
+  //   console.log(chalk.red(`Error: Plugin folder cannot be created`));
+  //   shell.exit(1);
+  // }
+
+  // shell.cd(argv.dir);
+  // shell.touch("functions.php");
+
+  // if (shell.exec("npm init -y").code !== 0) {
+  //   shell.echo("Error: Cannot create package.json");
+  //   shell.exit(1);
+  // }
+
+  // if (shell.exec("npm i parcel-bundler --save-dev").code !== 0) {
+  //   shell.echo("Error: Cannot install Parcel");
+  //   shell.exit(1);
+  // }
+
+  // (async () => {
+  //   // Pipe the child process stdout to the current stdout
+  //   execa("echo", ["2. unicorns"]).stdout.pipe(process.stdout);
+  //   execa("mkdir", ["tezza"]).stdout.pipe(process.stdout);
+  //   execa("cd", ["tezza"]).stdout.pipe(process.stdout);
+  //   execa("pwd").stdout.pipe(process.stdout);
+  //   execa("npm i parcel-bundler").stdout.pipe(process.stdout);
+  // })();
+
+  //shell.mkdir("-p", "/plugin_folder");
 });
 
 // To Do
@@ -128,3 +231,12 @@ inquirer.prompt(questions).then(function(answers) {
 //    b. optionally start watching files.
 //    c. optionally start web server and open browser (set flag to pick admin or front end). Might need to look into express to figure this out.
 // 6. Spin up new GitHub repo too?
+// 7. Add choice of licenses, but for now just add GPLv2+.
+// 9. Class or function prefix?
+// 10. Naming rules for functions etc. And need the plugin dir validating too. https://github.com/ahmadawais/create-guten-block/issues/18
+// 11. Add data to object rather than to argv object?
+// 12. https://parceljs.org/getting_started.html
+// 13. Add option to install node modules now or later. If later then the plugin creation process will be a lot faster, and so add dependencies to package.json manually and prompt them to run npm i later at the end of the script. (might be a package out there to edit package.json).
+// 14. Say in docs that if you have parcel installed globally then this will significantly improve the plugin creation time.
+// 15. If a free plugin meant for wp.org then create an optional readme file too.
+// 16. Setup some task runner jobs to process pot file etc.

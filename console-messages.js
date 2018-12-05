@@ -12,5 +12,5 @@ exports.initial = function() {
   console.log("\nCreated by David Gwyer");
   console.log("Twitter: https://twitter.com/dgwyer");
   console.log("GitHub: https://github.com/dgwyer/create-wp-plugin\n");
-  console.log("-----\n");
+  console.log("---\n");
 };

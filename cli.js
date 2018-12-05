@@ -11,11 +11,15 @@ const titleize = require("titleize");
 const shell = require("shelljs");
 const execa = require("execa");
 const exists = require("global-module-exists");
+const { header_tmpl } = require("./templates/plugin_header");
+
+// store plugin meta as it's generated
+const plugin_meta = {
+  install_parcel: true
+};
 
 // Show console welcome message
 messages.initial();
-
-var install_parcel = true;
 
 process.on("exit", code => {
   if (code === 1) {
@@ -63,7 +67,7 @@ console.log(chalk.green(`Plugin Name: ${argv.plugin_nice_name}\n`));
 
 // Is Parcel module installed globally?
 if (exists("parcel") || exists("parcel-bundler")) {
-  install_parcel = false;
+  plugin_meta.install_parcel = false;
 }
 
 const plugin_defaults = {
@@ -122,7 +126,7 @@ const questions = [
 ];
 
 // remove last question if Parcel globally installed
-if (install_parcel === false) {
+if (plugin_meta.install_parcel === false) {
   questions.splice(questions.length - 1);
 }
 
@@ -182,7 +186,10 @@ inquirer.prompt(questions).then(function(answers) {
     }
   }
 
+  console.log(header_tmpl(plugin_meta));
+
   console.log(answers);
+  console.log(argv);
 
   // dir as option to specify folder name that's different from plugin name >>> --dir="wpgoplugins"
 

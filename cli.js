@@ -13,9 +13,22 @@ const execa = require("execa");
 const exists = require("global-module-exists");
 const { header_tmpl } = require("./templates/plugin_header");
 
+// some initial defaults
+// const plugin_defaults = {
+//   name: "New WP Plugin",
+//   author: "David Gwyer",
+//   version: "0.0.1",
+// };
+
 // store plugin meta as it's generated
 const plugin_meta = {
-  install_parcel: true
+  install_parcel: true,
+  plugin_uri: "",
+  description: "",
+  author_uri: "",
+  license: "GPL2",
+  license_uri: "",
+  domain_path: "/languages"
 };
 
 // Show console welcome message
@@ -38,45 +51,61 @@ if (argv._.length == 0) {
   process.exit(1);
 }
 
-// if no plugin name specified
+// handle plugin dir
 if (argv.hasOwnProperty("dir") && (argv.dir === "" || argv.dir.length === 0)) {
   //console.log("dir empty?");
-  argv.dir = argv._[0];
+  plugin_meta.dir = argv._[0];
 } else if (argv.hasOwnProperty("dir")) {
   //console.log("we got one!");
   if (argv.dir === true) {
     // this will be true if --dir set on it's own so just use plugin name in this case
-    argv.dir = argv._[0];
+    plugin_meta.dir = argv._[0];
+    //plugin_meta.dir = argv._[0];
+  } else {
+    plugin_meta.dir = argv.dir;
   }
 } else {
   //console.log("no dir? using plugin name as folder");
-  argv.dir = argv._[0];
+  plugin_meta.dir = argv._[0];
+  //plugin_meta.dir = argv._[0];
 }
 
+plugin_meta.slug = argv._[0];
+
 // remove '-' and '_' chars
-argv.plugin_nice_name = argv._[0].replace(/[_-]/g, " ");
+plugin_meta.display_name = argv._[0].replace(/[_-]/g, " ");
+//argv.plugin_nice_name = argv._[0].replace(/[_-]/g, " ");
 
 // trim and remove multiple spaces
-argv.plugin_nice_name = argv.plugin_nice_name.replace(/ +(?= )/g, "").trim();
+plugin_meta.display_name = plugin_meta.display_name
+  .replace(/ +(?= )/g, "")
+  .trim();
+//argv.plugin_nice_name = argv.plugin_nice_name.replace(/ +(?= )/g, "").trim();
 
-argv.plugin_nice_name = titleize(argv.plugin_nice_name);
+plugin_meta.display_name = titleize(plugin_meta.display_name);
+//argv.plugin_nice_name = titleize(argv.plugin_nice_name);
 
 console.log(chalk.blue(`1) LET'S GATHER SOME PLUGIN DETAILS (1/4)\n`));
 
-console.log(chalk.green(`Plugin Name: ${argv.plugin_nice_name}\n`));
+console.log(chalk.green(`Plugin Name: ${plugin_meta.display_name}\n`));
 
 // Is Parcel module installed globally?
 if (exists("parcel") || exists("parcel-bundler")) {
   plugin_meta.install_parcel = false;
 }
 
-const plugin_defaults = {
-  name: "New WP Plugin",
-  author: "David Gwyer",
-  version: "0.0.1"
-};
-
 const questions = [
+  {
+    type: "input",
+    name: "plugin_description",
+    message: "Plugin Description:",
+    filter: function(input) {
+      return input.trim();
+    },
+    default: function() {
+      return "New WordPress plugin";
+    }
+  },
   {
     type: "input",
     name: "plugin_author",
@@ -131,6 +160,12 @@ if (plugin_meta.install_parcel === false) {
 }
 
 inquirer.prompt(questions).then(function(answers) {
+  // populate meta object with entered data
+  plugin_meta.version = answers.plugin_version;
+  plugin_meta.author = answers.plugin_author;
+  plugin_meta.text_domain = answers.plugin_text_domain;
+  plugin_meta.description = answers.plugin_description;
+
   // Is Parcel module installed globally?
   if (exists("parcel") || exists("parcel-bundler")) {
     console.log(
@@ -140,13 +175,13 @@ inquirer.prompt(questions).then(function(answers) {
 
   console.log(chalk.blue(`2) CREATING PLUGIN FILES (2/4)\n`));
 
-  if (shell.mkdir(argv.dir).code !== 0) {
+  if (shell.mkdir(plugin_meta.dir).code !== 0) {
     console.log(chalk.red(`Error: Main plugin folder cannot be created`));
     shell.exit(1);
   }
 
-  //  shell.exec(`mkdir ${argv.dir}`);
-  shell.cd(argv.dir);
+  //  shell.exec(`mkdir ${plugin_meta.dir}`);
+  shell.cd(plugin_meta.dir);
   shell.exec("npm init -y"); // create package.json file
   shell.touch("functions.php");
 
@@ -190,6 +225,7 @@ inquirer.prompt(questions).then(function(answers) {
 
   console.log(answers);
   console.log(argv);
+  console.log(plugin_meta);
 
   // dir as option to specify folder name that's different from plugin name >>> --dir="wpgoplugins"
 
@@ -197,12 +233,12 @@ inquirer.prompt(questions).then(function(answers) {
 
   //shell.exec('npm list -g --depth=0"');
 
-  // if (shell.mkdir(argv.dir).code !== 0) {
+  // if (shell.mkdir(plugin_meta.dir).code !== 0) {
   //   console.log(chalk.red(`Error: Plugin folder cannot be created`));
   //   shell.exit(1);
   // }
 
-  // shell.cd(argv.dir);
+  // shell.cd(plugin_meta.dir);
   // shell.touch("functions.php");
 
   // if (shell.exec("npm init -y").code !== 0) {
@@ -247,3 +283,4 @@ inquirer.prompt(questions).then(function(answers) {
 // 14. Say in docs that if you have parcel installed globally then this will significantly improve the plugin creation time.
 // 15. If a free plugin meant for wp.org then create an optional readme file too.
 // 16. Setup some task runner jobs to process pot file etc.
+// 17. Could also offer other setup configs that use webpack instead of parcel.
